@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#define OFFSET_META 0
+#define OFFSET_BLOCK OFFSET_META + sizeof(Meta)
 #define BP_ORDER 20
 
 struct Meta {
@@ -53,10 +55,14 @@ template <typename K, typename V>
 class BPlusTree {
 private:
     char _path[512]; // 索引文件路径
+    Meta _meta; // B+树的元信息
+    FILE *_fp; // 文件指针
+    int _fp_level;
 
 
 public:
-    BPlusTree(const char *p, bool force_empty)
+    // 构造函数
+    BPlusTree(const char *p, bool force_empty);
     // 查找
     int find(int key);
     // 插入
@@ -66,8 +72,22 @@ public:
     // 改正
     bool set(int key, int value);
 
-    // 初始化树
-    void init_from_empty();
+
+private:
+    int _init_from_empty();
+
+    // 从磁盘文件中读入
+    int _map(void *block, off_t offset, size_t size);
+    // 写入磁盘文件
+    int _unmap(void *block, off_t offset, size_t size);
+    // 打开文件
+    int _open();
+    // 关闭文件
+    int _close();
+    // 在文件中分配空间
+    off_t _alloc(size_t size);
+    off_t _alloc(LeafNode<K, V> *leaf);
+    off_t _alloc(InternalNode *node);
 };
 
 #endif
